@@ -1,0 +1,3384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CeylonSoft - Superior IT Solutions</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- Animate.css for Animations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
+
+    <!-- Font Awesome (for chatbot button and WhatsApp icon) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Include AOS Library -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+    <!-- Add Swiper JS CSS-->
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+
+    <!-- Custom CSS -->
+    <style>
+        /* --- Advanced Chatbot CSS --- */
+
+        /* Root-level variables for theming */
+        :root {
+            --primary-color: #007bff;
+            /* Blue */
+            --primary-color-darker: #0056b3;
+            /* Darker Blue */
+            --background-color: #fff;
+            /* White */
+            --text-color: #333;
+            /* Black (or very dark gray) */
+            --message-user-bg: #e0f7fa;
+            --message-user-border: #b2ebf2;
+            --message-ai-bg: #f2f2f2;
+            --message-ai-border: #e0e0e0;
+            --border-color: #ddd;
+            --scrollbar-color: #888;
+            --scrollbar-track-color: #f1f1f1;
+        }
+
+        /* --- Rest of your Chatbot CSS remains mostly the same, just use the variables above --- */
+        /* I've made minimal changes below, mostly to variable names.  The core logic is identical. */
+        #chat-container {
+            position: fixed;
+            bottom: 20px;
+            /* Reduced bottom spacing for better mobile view */
+            right: 20px;
+            width: 400px;
+            max-width: 95vw;
+            /* Even more responsive on small screens */
+            height: 600px;
+            max-height: 90vh;
+            /* More height flexibility on smaller viewports */
+            margin: 0;
+            background-color: var(--background-color);
+            /* Using variable */
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+            /* Stronger shadow for depth */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            /* Smooth open/close animation */
+            opacity: 1;
+            /* Default opacity */
+        }
+
+        /* Animation for opening the chatbot */
+        #chat-container.closed {
+            transform: translateY(100%);
+            /* Slide down when closed */
+            opacity: 0;
+            pointer-events: none;
+            /* Prevent interaction when closed */
+        }
+
+
+        #chat-header {
+            background: linear-gradient(to right, var(--primary-color), var(--primary-color-darker));
+            /* Blue gradient */
+            color: #fff;
+            padding: 18px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            z-index: 10;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #chat-header h2 {
+            /* Add style for header title if you use one */
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        /* Improved close button with SVG for better scaling */
+        .close-button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1.5em;
+            /* Slightly larger */
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+            padding: 0;
+            /* Reset padding */
+            margin-left: 15px;
+            /* Space from title */
+        }
+
+        .close-button:hover {
+            opacity: 1;
+        }
+
+        /* You can use an SVG icon instead of text for a cleaner look */
+        .close-button::after {
+            content: '×';
+            /* Or use an SVG icon as background-image */
+            display: block;
+            line-height: 1;
+            /* Adjust for vertical centering if needed */
+        }
+
+        #chat-messages {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            overscroll-behavior: contain;
+            /* Prevents scroll chaining on mobile */
+            scrollbar-width: thin;
+            /* For Firefox */
+            scrollbar-color: var(--scrollbar-color) var(--scrollbar-track-color);
+            /* Theming scrollbar for Firefox */
+        }
+
+        /* Webkit scrollbar (Chrome, Safari) - already in your code, kept for completeness */
+        ::-webkit-scrollbar {
+            width: 8px;
+            /* Slightly thinner scrollbar */
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track-color);
+            /* Themed scrollbar track */
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-color);
+            /* Themed scrollbar thumb */
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+
+        .message {
+            margin-bottom: 15px;
+            padding: 14px 16px;
+            /* Slightly increased padding */
+            border-radius: 10px;
+            /* More rounded messages */
+            max-width: 85%;
+            /* Slightly wider message area */
+            word-wrap: break-word;
+            position: relative;
+            animation: message-fade-in 0.4s ease-out forwards;
+            /* Message fade-in animation */
+            opacity: 0;
+            /* Initially hidden for animation */
+            transform: translateY(10px);
+            /* Slide up slightly for animation */
+        }
+
+        @keyframes message-fade-in {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+        .user-message {
+            background-color: var(--message-user-bg);
+            /* Using variable */
+            border: 1px solid var(--message-user-border);
+            /* Using variable */
+            align-self: flex-end;
+            color: var(--text-color);
+            /* Ensure text color is consistent */
+        }
+
+        .ai-message {
+            background-color: var(--message-ai-bg);
+            /* Using variable */
+            border: 1px solid var(--message-ai-border);
+            /* Using variable */
+            align-self: flex-start;
+            color: var(--text-color);
+            /* Ensure text color is consistent */
+        }
+
+        .message-timestamp {
+            font-size: 0.75em;
+            /* Slightly larger timestamp */
+            color: #777;
+            /* Slightly darker timestamp */
+            position: absolute;
+            bottom: -18px;
+            /* Adjusted for larger font size */
+            right: 10px;
+            white-space: nowrap;
+        }
+
+        .user-message .message-timestamp {
+            right: auto;
+            left: 10px;
+        }
+
+        #chat-input-container {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            /* Using variable */
+            background-color: var(--background-color);
+            /* Using variable */
+            z-index: 10;
+            position: sticky;
+            bottom: 0;
+            backdrop-filter: blur(5px);
+            /* Optional: subtle blur for input area */
+            -webkit-backdrop-filter: blur(5px);
+            /* For Safari */
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 25px;
+            margin-right: 10px;
+            font-size: 16px;
+            outline: none;
+            color: var(--text-color);
+            /* Using variable */
+            background-color: var(--background-color);
+            /* Using variable */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            /* Smooth focus transition */
+        }
+
+        #user-input::placeholder {
+            color: #aaa;
+            /* Slightly lighter placeholder */
+            opacity: 0.8;
+            /* Slightly less opaque placeholder */
+        }
+
+        #user-input:focus {
+            border-color: var(--primary-color);
+            /* Using variable */
+            box-shadow: 0 0 6px rgba(0, 123, 255, 0.6);
+            /* Blue focus shadow */
+        }
+
+
+        #send-button {
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            font-size: 16px;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #send-button:hover {
+            background-color: var(--primary-color-darker);
+            transform: scale(1.05);
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.25);
+        }
+
+        #send-button:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+
+        #send-button i {
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+            /* Smooth icon transition */
+        }
+
+        #send-button:hover i {
+            transform: rotate(45deg);
+            /* Subtle icon rotation on hover */
+        }
+
+        #scenario-buttons {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            padding: 10px;
+            background-color: var(--background-color);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            gap: 8px;
+        }
+
+        .scenario-button {
+            padding: 9px 14px;
+            margin: 0;
+            background-color: #f0f0f0;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 22px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.2s ease;
+            font-size: 15px;
+            outline: none;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .scenario-button:hover,
+        .scenario-button.active {
+            background-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+        }
+
+
+        #loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 15px;
+        }
+
+        #loading-indicator img {
+            width: 40px;
+            height: 40px;
+            animation: rotate 1.5s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .cta {
+            margin-top: 12px;
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: inline-block;
+            padding: 6px 8px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .cta:hover {
+            background-color: rgba(0, 123, 255, 0.15);
+            /* Light blue on hover */
+            text-decoration: underline;
+        }
+
+        /* Lists and formatting */
+        ul {
+            list-style-type: disc;
+            margin-left: 25px;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        ol {
+            margin-left: 25px;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        li {
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+
+        .highlight {
+            background-color: #FFFF99;
+            padding: 3px 5px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background-color: var(--background-color);
+            margin: 10% auto;
+            padding: 35px;
+            border-radius: 14px;
+            max-width: 650px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        #typing-indicator {
+            display: none;
+            padding-left: 10px;
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+
+        #typing-indicator span {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background-color: #888;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing-dots 1.5s infinite;
+        }
+
+        @keyframes typing-dots {
+
+            0%,
+            20% {
+                transform: translateY(0);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: translateY(-4px);
+                opacity: 1;
+            }
+
+            80%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.3;
+            }
+        }
+
+        pre {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 18px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 12px;
+            font-size: 0.95em;
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f1f1f1;
+            padding: 3px 5px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .message img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .alert {
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+
+        .alert-info {
+            background-color: #d9edf7;
+            border: 1px solid #bce8f1;
+            color: #31708f;
+        }
+
+        .alert-warning {
+            background-color: #fcf8e3;
+            border: 1px solid #faebcc;
+            color: #8a6d3b;
+        }
+
+        .alert-error {
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            color: #a94442;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .dialog-history {
+            font-size: 0.9em;
+            color: #777;
+            margin-bottom: 6px;
+        }
+
+        .context-menu {
+            position: absolute;
+            display: none;
+            background-color: var(--background-color);
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .context-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .context-menu li {
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            color: var(--text-color);
+        }
+
+        .context-menu li:hover {
+            background-color: #f0f0f0;
+        }
+
+
+        .suggestion-chips {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            margin-bottom: 18px;
+            gap: 8px;
+        }
+
+        .suggestion-chip {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 18px;
+            padding: 6px 12px;
+            margin-right: 0;
+            margin-bottom: 0;
+            cursor: pointer;
+            display: inline-block;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            color: var(--text-color);
+        }
+
+        .suggestion-chip:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Button to trigger chatbot */
+        #open-chatbot-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 16px 22px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #open-chatbot-btn:hover {
+            background-color: var(--primary-color-darker);
+            transform: scale(1.08);
+            box-shadow: 0 4px 9px rgba(0, 0, 0, 0.3);
+        }
+
+        #open-chatbot-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .minimized {
+            display: none !important;
+        }
+
+
+        /* Style the WhatsApp link (optional) */
+        .whatsapp-link {
+            color: #25d366;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .whatsapp-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive adjustments using media queries */
+        @media (max-width: 768px) {
+
+            /* Tablets and smaller */
+            #chat-container {
+                width: 90vw;
+                /* Take up more width on smaller screens */
+                max-height: 95vh;
+                /* Take up more height on smaller screens */
+                bottom: 0;
+                /* Stick to the bottom on smaller screens */
+                right: 0;
+                left: 0;
+                margin: 0 auto;
+                /* Center horizontally */
+                border-radius: 0;
+                /* Remove border radius for full-width on smaller screens */
+                height: auto;
+                /* Adjust height automatically */
+                max-height: 95vh;
+            }
+
+            #chat-header {
+                padding: 15px;
+                /* Reduce header padding on smaller screens */
+                font-size: 1em;
+                /* Adjust header font size */
+                border-radius: 0;
+                /* No border radius on header for full-width */
+            }
+
+            #chat-messages {
+                padding: 15px;
+                /* Reduce message padding on smaller screens */
+            }
+
+            #chat-input-container {
+                padding: 12px;
+                /* Reduce input container padding on smaller screens */
+            }
+
+            #user-input {
+                font-size: 15px;
+                /* Slightly smaller input font size */
+                padding: 10px 12px;
+                /* Reduce input padding */
+            }
+
+            #send-button {
+                padding: 10px 20px;
+                /* Reduce send button padding */
+                font-size: 15px;
+                /* Slightly smaller send button font size */
+            }
+
+            .message {
+                padding: 12px 14px;
+                /* Reduce message padding on smaller screens */
+                font-size: 0.95em;
+                /* Slightly smaller message font size */
+            }
+
+            .message-timestamp {
+                font-size: 0.7em;
+                /* Adjust timestamp font size on smaller screens */
+            }
+
+            #scenario-buttons {
+                padding: 8px;
+                /* Reduce scenario button padding */
+            }
+
+            .scenario-button {
+                padding: 7px 10px;
+                /* Reduce scenario button padding */
+                font-size: 13px;
+                /* Slightly smaller scenario button font size */
+            }
+
+            .modal-content {
+                margin: 5% auto;
+                /* Reduce modal top margin on smaller screens */
+                padding: 25px;
+                /* Reduce modal content padding on smaller screens */
+            }
+        }
+
+        @media (max-width: 480px) {
+
+            /* Very small screens (Phones) */
+            #chat-header h2 {
+                font-size: 1.1em;
+                /* Further adjust header font size for very small screens */
+            }
+
+            #open-chatbot-btn {
+                bottom: 15px;
+                /* Adjust button position on very small screens */
+                right: 15px;
+                font-size: 22px;
+                /* Slightly smaller button icon on very small screens */
+                width: 50px;
+                /* Slightly smaller button size on very small screens */
+                height: 50px;
+            }
+        }
+
+
+
+        /* --- Main Page Styles (using Black, White, Blue) --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Modern, readable font */
+            color: var(--text-color);
+            /* Use the defined text color */
+            background-color: var(--background-color);
+            /* Use the defined background color */
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #000 !important;
+            /* Black navbar */
+        }
+
+        .navbar-brand {
+            color: #fff !important;
+            /* White brand text */
+        }
+
+        .navbar-brand .brand-part.text-primary {
+            color: #007bff !important;
+            /* Blue Ceylon part */
+        }
+
+        .navbar-nav .nav-link {
+            color: #fff !important;
+            /* White nav links */
+            position: relative;
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+            overflow: hidden;
+            /* Important for the hover effect */
+
+        }
+
+        .navbar-nav .nav-link::before {
+            content: attr(data-hover);
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #007bff;
+            /* Blue hover color */
+            transition: top 0.3s ease;
+            pointer-events: none;
+            /* Allows clicking through the pseudo-element */
+        }
+
+        .navbar-nav .nav-link:hover::before {
+            top: 0.5rem;
+            /* Show the blue text on hover by moving it up */
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: transparent !important;
+            /* Make the original text transparent on hover */
+        }
+
+
+        /* Hero Section */
+        #home {
+            background-image: url('Flux_Dev_Professional_graphic_design_3D_render_An_ultramodern__1.jpeg');
+            /*  image URL */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            /* White text */
+            position: relative;
+        }
+
+        .gradient-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3));
+            /* Black gradient overlay */
+        }
+
+        .hero-heading {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            /* Text shadow for better readability */
+        }
+
+        .hero-subtext {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            /* Text shadow */
+
+        }
+
+        .cta-btn {
+            font-size: 1.2rem;
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            /* Rounded buttons */
+            transition: all 0.3s ease;
+            /* Smooth transition for hover effects */
+        }
+
+        .cta-btn.btn-primary {
+            background-color: #007bff;
+            /* Blue button */
+            border-color: #007bff;
+            color: #fff;
+        }
+
+        .cta-btn.btn-primary:hover {
+            background-color: #0056b3;
+            /* Darker Blue button */
+            border-color: #0056b3;
+        }
+
+        .cta-btn.btn-outline-light {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .cta-btn.btn-outline-light:hover {
+            background-color: #fff;
+            color: #007bff;
+            /* Blue text on hover */
+        }
+
+        .floating-bubbles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* Make bubbles click-through */
+            z-index: 1;
+            /* Behind the text */
+        }
+
+        .bubble {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.1);
+            /* Semi-transparent white */
+            border-radius: 50%;
+            animation: floatBubble linear infinite;
+        }
+
+        .bubble:nth-child(1) {
+            width: 40px;
+            height: 40px;
+            left: 10%;
+            animation-duration: 8s;
+            animation-delay: 1s;
+        }
+
+        .bubble:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            left: 30%;
+            animation-duration: 10s;
+            animation-delay: 3s;
+        }
+
+        .bubble:nth-child(3) {
+            width: 30px;
+            height: 30px;
+            left: 50%;
+            animation-duration: 15s;
+        }
+
+        .bubble:nth-child(4) {
+            width: 40px;
+            height: 40px;
+            left: 10%;
+            animation-duration: 8s;
+        }
+
+        @keyframes floatBubble {
+            0% {
+                transform: translateY(100vh) scale(0);
+            }
+
+            100% {
+                transform: translateY(-10vh) scale(1);
+            }
+        }
+
+
+
+        /* Services Section */
+        #services {
+            background-color: #f8f9fa;
+            /* Light gray background */
+            color: #333;
+            /* Black text */
+            padding: 4rem 0;
+        }
+
+        .service-card {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            text-align: center;
+            /* Center-align the content */
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .service-card .icon {
+            font-size: 3rem;
+            color: #007bff;
+            /* Blue icons */
+            margin-bottom: 1rem;
+        }
+
+
+        /* Project Overview Section */
+        #project-overview {
+            background-color: #343a40;
+            /* Dark background */
+            color: #fff;
+            padding: 4rem 0;
+        }
+
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.1);
+            /* Semi-transparent white */
+            backdrop-filter: blur(10px);            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1rem;
+        }
+
+        /* Clients Section */
+        #clients {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .client-logo img {
+            max-width: 100px;
+            /* Adjust as needed */
+            filter: grayscale(100%);
+            /* Start as grayscale */
+            transition: filter 0.3s ease;
+            /* Smooth transition for hover */
+        }
+
+        .client-logo:hover img {
+            filter: grayscale(0%);
+            /* Full color on hover */
+        }
+
+        /* Technologies Section */
+        #technologies {
+            background-color: #343a40;
+            color: #fff;
+            padding: 4rem 0;
+        }
+
+        .tech-card {
+            perspective: 1000px
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+
+        .tech-card:hover .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front,
+        .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .card-front {
+            background-color: #fff;
+            color: #333;
+            /* Black text on front */
+        }
+
+        .card-back {
+            background-color: #007bff;
+            /* Blue background on back */
+            color: #fff;
+            transform: rotateY(180deg);
+        }
+
+        .card-front i {
+            color: #007bff;
+        }
+
+
+        /* Team Section */
+        #team {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .team-card {
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            overflow: hidden;
+            /* Important for rounded corners with the image */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .team-card .card-inner {
+            position: relative;
+            width: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .team-card:hover .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .team-card .card-front,
+        .team-card .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* Center content horizontally */
+            justify-content: center;
+            /* Center content vertically */
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .team-card .card-front {
+            background: rgba(255, 255, 255, 0.9);
+            /* Semi-transparent white */
+
+        }
+
+        .team-card .card-back {
+            background-color: #007bff;
+            /* Blue */
+            color: #fff;
+            transform: rotateY(180deg);
+            text-align: center;
+
+        }
+
+
+        .team-card img {
+            width: 120px;
+            /* Adjust as needed */
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            /* Ensure the image covers the area */
+            margin-bottom: 0.5rem;
+        }
+
+
+        /* Portfolio Section */
+        #portfolio {
+            background-color: #343a40;
+            color: #fff;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .portfolio-card {
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            /* For the flip effect */
+            perspective: 1000px;
+            /* 3D perspective */
+        }
+
+        .portfolio-card .card-front,
+        .portfolio-card .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            /* Hide the back when facing the front */
+            transition: transform 0.8s;
+            /* Smooth transition */
+            display: flex;
+            flex-direction: column;
+            /* Stack content vertically */
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        .portfolio-card .card-front {
+            transform: rotateY(0deg);
+            /* Initially show the front */
+        }
+
+        .portfolio-card:hover .card-front {
+            transform: rotateY(180deg);
+            /* Rotate front on hover */
+        }
+
+        .portfolio-card .card-back {
+            background-color: #007bff;
+            /* Blue */
+            color: #fff;
+            transform: rotateY(-180deg);
+            /* Initially hidden */
+
+        }
+
+        .portfolio-card:hover .card-back {
+            transform: rotateY(0deg);
+            /* Show back on hover */
+        }
+
+
+        .portfolio-card img {
+            width: 100%;
+            height: 200px;
+            /*  fixed height */
+            object-fit: cover;
+            /* Cover the area */
+            border-bottom: 1px solid #ddd;
+            /* Optional: Add a separator */
+        }
+
+
+        /* Testimonials Section */
+        #testimonials {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 4rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .parallax-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            /* Parallax effect */
+            z-index: -1;
+        }
+
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.9);
+            /* Semi-transparent white */
+            backdrop-filter: blur(5px);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            max-width: 400px;
+            /* Or whatever width you prefer */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .testimonial-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+        }
+
+        .swiper-pagination-bullet-active {
+            background-color: #007bff;
+            /* Active bullet color */
+        }
+
+
+        /* Contact Section */
+        #contact {
+            background-color: #343a40;
+            color: #fff;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        /* Footer */
+        footer {
+            background-color: #000;
+            /* Black */
+            color: #fff;
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .back-to-top {
+            background-color: transparent;
+            border-color: #fff;
+            color: #fff;
+            position: absolute;
+            right: 20px;
+            bottom: 10px;
+            /* Position it slightly above the bottom */
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+
+        }
+
+        .back-to-top:hover {
+            background-color: #fff;
+            color: #000
+        }
+
+        .social-icons a {
+            color: #fff;
+            font-size: 1.2rem;
+            margin: 0 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-icons a:hover {
+            color: #007bff;
+            /* Blue on hover */
+        }
+
+        /* Loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            /* Black background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            /* Ensure it's on top of everything */
+        }
+
+        .loading-content {
+            text-align: center;
+            color: #fff;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            position: relative;
+        }
+
+        .circle {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            border: 4px solid transparent;
+            border-top-color: #007bff;
+            /* Blue */
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+        }
+
+        .circle:nth-child(2) {
+            border-top-color: #fff;
+            animation-delay: -0.75s;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+
+        /* Add other sections and styles as needed, maintaining the black, white, and blue color scheme */
+
+        /* Glassmorphism Background for Technologies */
+        #technologies {
+            background: rgba(255, 255, 255, 0.1);
+            /* Light, semi-transparent white */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            /* For Safari */
+            border-radius: 15px;
+            /* Rounded corners for the section */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            /* Subtle shadow */
+            position: relative;
+            /* Needed for z-index to work */
+            z-index: 1;
+            /* Ensure it's above the pseudo-element */
+        }
+
+        /* Background gradient - subtle and modern */
+        #technologies::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2a2a30, #8f94fb);
+            /* Example gradient */
+            opacity: 0.3;
+            /* Adjust for desired visibility */
+            z-index: -1;
+            /* Place it behind the content */
+            border-radius: inherit;
+            /* Inherit border-radius from parent */
+        }
+
+
+        #technologies .tech-card {
+            height: 250px;
+            /* Fixed height, adjust as needed */
+            width: 100%;
+            /* Take up full column width */
+            /* Remove max-width if you want it to expand */
+
+        }
+
+
+        #technologies .card-front,
+        #technologies .card-back {
+            border-radius: 15px;
+            /* Rounded corners for cards */
+            /* Glassmorphism for cards */
+            background: rgba(255, 255, 255, 0.2);
+            /* Slightly more opaque than the section */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            /* Padding inside the cards */
+        }
+
+        #technologies .card-back {
+            background: rgba(255, 255, 255, 0.3);
+            /* Slightly different background for the back */
+        }
+
+        #technologies .card-front h4,
+        #technologies .card-back p {
+            color: white;
+        }
+
+        /* Custom scrollbar (optional, but looks good with this design) */
+        #technologies ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #technologies ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        #technologies ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+        }
+
+        #technologies ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #technologies .tech-card {
+                height: 220px;
+                /* Smaller cards on smaller screens */
+            }
+        }
+
+
+        /* --- General Section Styling for Team --- */
+        #team {
+            background: rgba(255, 255, 255, 0.2);
+            /* Lighter glassmorphism for the section */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            position: relative;
+            /* For pseudo-element */
+            z-index: 1;
+        }
+
+        #team::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            /* Light gradient */
+            opacity: 0.3;
+            z-index: -1;
+            border-radius: inherit;
+        }
+
+
+        /* --- Card Styling for Team --- */
+        #team .team-card {
+            height: 400px;
+            /* Adjust as needed */
+            width: 100%;
+        }
+
+
+        #team .card-front,
+        #team .card-back {
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.3);
+            /* Glassmorphism on cards */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            color: #333;
+            /* Dark text for better readability on light background */
+        }
+
+        /* Card Back */
+        #team .card-back {
+            background: rgba(255, 255, 255, 0.4);
+            /* Slightly different back */
+            justify-content: space-between;
+            /* Distribute space for content and icons */
+        }
+
+        #team .card-back div {
+            margin-top: auto;
+        }
+
+        #team .card-front img {
+            width: 150px;
+            /* Larger image */
+            height: 150px;
+            object-fit: cover;
+            /* Ensure image covers the circle */
+            border: 4px solid white;
+            /* White border around the image */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 50%; /* Make the image a perfect circle */
+        }
+
+        #team .card-front h4,
+        #team .card-back h4 {
+            margin-bottom: 5px;
+            font-weight: 600;
+            /* Slightly bolder font */
+        }
+
+        #team .card-front p,
+        #team .card-back p {
+            font-size: 0.9em;
+            margin-bottom: 0;
+            /* Remove default bottom margin */
+        }
+
+
+        /* Social Icons Styling */
+        #team .card-back a {
+            color: #555;
+            /* Icon color */
+            font-size: 1.2em;
+            transition: color 0.3s ease;
+        }
+
+        #team .card-back a:hover {
+            color: #007bff;
+            /* Bootstrap primary color on hover */
+        }
+
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 768px) {
+            #team .team-card {
+                height: auto;
+                /* Allow cards to adjust height on smaller screens */
+            }
+
+            #team .card-front img {
+                width: 120px;
+                height: 120px;
+            }
+        }
+
+        /* --- Custom Scrollbar (optional) --- */
+        #team ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #team ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        #team ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        #team ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- Section Styling for Portfolio --- */
+        #portfolio {
+            background: rgba(0, 0, 0, 0.7);
+            /* Dark, semi-transparent background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            /* Shadow for depth */
+            position: relative;
+            z-index: 1;
+        }
+
+        #portfolio::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2b5876, #4e4376);
+            /* Dark gradient */
+            opacity: 0.5;
+            /* Adjust for visibility */
+            z-index: -1;
+            border-radius: inherit;
+        }
+
+        #portfolio h2 {
+            color: white;
+            /* Ensure heading is white */
+        }
+
+
+        /* --- Card Styling for Portfolio --- */
+        #portfolio .portfolio-card {
+            height: 350px;
+            /* Or whatever height you prefer */
+            width: 100%;
+        }
+
+      #portfolio .card-front,
+      #portfolio .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            overflow: hidden; /* Clip any overflowing content */
+            transition: transform 0.8s ease;
+            display: flex;
+            flex-direction: column; /* Stack content vertically */
+            justify-content: center;/* Center vertically */
+            align-items: center; /* Center horizontally */
+
+        }
+
+        #portfolio .portfolio-card:hover .card-front {
+            transform: rotateY(180deg);
+        }
+
+        #portfolio .portfolio-card:hover .card-back {
+            transform: rotateY(0deg);
+            /* Bring back to 0 on hover */
+
+        }
+
+
+        #portfolio .card-front {
+            /* background-color: #f8f9fa;  Light background for the front */
+            transform: rotateY(0deg);
+            z-index: 2;
+        }
+
+        #portfolio .card-front img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Cover the entire space, cropping if needed */
+            border-radius: 15px;
+            /* Match card border-radius */
+
+        }
+
+        #portfolio .card-back {
+            background: rgba(255, 255, 255, 0.8);
+            /* Slightly transparent white */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            transform: rotateY(-180deg);
+            color: #333;
+            /* Dark text on light background */
+            padding: 20px;
+            text-align: center;
+            z-index: 1;
+        }
+
+        #portfolio .card-back h4 {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+       #portfolio .card-back p {
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+       #portfolio .card-back .btn-light {
+            background-color: #fff;
+            /* White button */
+            border-color: #ddd;
+            /* Light gray border */
+            color: #333;
+            /* Dark text */
+            transition: all 0.3s ease;
+        }
+
+        #portfolio .card-back .btn-light:hover {
+            background-color: #e9ecef;
+            /* Slightly darker on hover */
+            border-color: #bbb;
+            color: #222;
+        }
+
+        /* --- Custom Scrollbar (optional) --- */
+       #portfolio ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #portfolio ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        #portfolio ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 5px;
+        }
+
+        #portfolio::webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        /* --- Section Styling for Testimonials --- */
+        #testimonials {
+            background: rgba(255, 255, 255, 0.2);
+            /* Light, semi-transparent background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            position: relative;
+            /* For parallax and overlay */
+            z-index: 1;
+            /* Ensure content is above parallax */
+            color: #333;
+            /* Dark text for contrast */
+        }
+
+        #testimonials h2,
+        #testimonials .lead {
+            color: #333;
+        }
+
+        /* --- Parallax Background --- */
+        #testimonials .parallax-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            /* Parallax effect */
+            z-index: -1;
+            /* Behind the content */
+            opacity: 0.3;
+            /* Adjust for visibility */
+            border-radius: inherit;
+        }
+
+
+        /* --- Swiper Container --- */
+        #testimonials .swiper {
+            width: 100%;
+            padding-top: 50px;
+            /* Space for pagination */
+            padding-bottom: 50px;
+        }
+
+        #testimonials .swiper-slide {
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Testimonial Card --- */
+        #testimonials .testimonial-card {
+            background: rgba(255, 255, 255, 0.6);
+            /* Glassmorphism */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            /* Limit card width */
+            margin: 0 auto;
+            /* Center horizontally */
+
+        }
+
+        #testimonials .testimonial-img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            /* Ensure image fills the circle */
+            border: 3px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border-radius: 50%;  /* Circular image */
+        }
+
+        /* --- Swiper Pagination --- */
+        #testimonials .swiper-pagination-bullet {
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Darker bullets */
+            opacity: 1;
+            /* Fully opaque */
+        }
+
+        #testimonials .swiper-pagination-bullet-active {
+            background-color: #007bff;
+            /* Active bullet color */
+        }
+
+
+        /* --- Custom Scrollbar (optional) --- */
+        #testimonials ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #testimonials ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        #testimonials ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        #testimonials ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- Section Styling for Contact --- */
+        #contact {
+            background: rgba(0, 0, 0, 0.7);
+            /* Dark, semi-transparent background */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            /* Prevent content overflow */
+        }
+
+        /* --- Parallax Background --- */
+        #contact::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('contact-bg.jpg');
+            /* Replace with your image */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            /* Parallax effect */
+            z-index: -1;
+            opacity: 0.4;
+            /* Adjust for desired visibility */
+            border-radius: inherit;
+        }
+
+
+        /* --- Button Styling --- */
+        #contact .btn-primary {
+            background-color: #007bff;
+            /* Bootstrap primary color */
+            border-color: #007bff;
+            transition: all 0.3s ease;
+        }
+
+        #contact .btn-primary:hover {
+            background-color: #0056b3;
+            /* Darker shade on hover */
+            border-color: #0056b3;
+        }
+
+        /* --- Custom Scrollbar (optional) --- */
+        #contact ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #contact ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        #contact ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 5px;
+        }
+
+        #contact ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        /* --- Responsive Adjustments (optional) --- */
+        @media (max-width: 768px) {
+            #contact .btn-lg {
+                font-size: 1rem;
+                /* Smaller button text on smaller screens */
+                padding: 0.5rem 1rem;
+            }
+        }
+
+         /* --- Footer Styling --- */
+         footer {
+            background: rgba(0, 0, 0, 0.7); /* Dark, semi-transparent */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px 15px 0 0; /* Rounded top corners */
+            box-shadow: 0 -8px 32px 0 rgba(31, 38, 135, 0.37); /* Shadow at the top */
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Footer Background (Subtle Pattern) --- */
+        footer::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cg fill='%239C92AC' fill-opacity='0.4'%3E%3Cpolygon fill-rule='evenodd' points='8 4 12 6 8 8 6 12 4 8 0 6 4 4 6 0 8 4'/%3E%3C/g%3E%3C/svg%3E"); /* Subtle SVG pattern */
+            opacity: 0.2; /* Adjust for visibility */
+            z-index: -1;
+            border-radius: inherit;
+        }
+
+
+        /* --- Social Icons --- */
+        footer .social-icons a {
+            font-size: 1.5em; /* Larger icons */
+            transition: transform 0.3s ease, color 0.3s ease; /* Smooth transitions */
+            display: inline-block; /* For transform to work */
+
+        }
+
+        footer .social-icons a:hover {
+            transform: translateY(-5px) scale(1.2); /* Move up and scale on hover */
+            color: #007bff; /* Bootstrap primary color */
+        }
+
+        /* --- Back to Top Button --- */
+        footer .back-to-top {
+            position: absolute; /* Positioned relative to the footer */
+            bottom: 20px; /* Space from bottom */
+            left:20px ; /* Space from left */
+            opacity: 0; /* Initially hidden */
+            transition: opacity 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+            border-radius: 50%; /* Circular button */
+            width: 40px;
+            height: 40px;
+            display: flex; /* For centering the icon */
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            background-color: transparent;
+            border: 1px solid #fff;
+            color: white;
+
+        }
+           footer .back-to-top:hover{
+                transform: scale(1.1);
+                background-color: #fff;
+                color: #000;  }
+
+
+footer .back-to-top.show {
+    opacity: 1; /* Show when scrolled down */
+}
+
+
+/* --- Custom Scrollbar (optional) --- */
+footer ::-webkit-scrollbar {width: 10px;}
+footer ::-webkit-scrollbar-track {background: rgba(0, 0, 0, 0.1);}
+footer ::-webkit-scrollbar-thumb {background: rgba(255, 255, 255, 0.4); border-radius: 5px;}
+footer ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.6); }
+
+    </style>
+
+</head>
+
+<body class="bg-light text-dark"
+    oncontextmenu="return false;"
+    onselectstart="return false;"
+    ondragstart="return false;">
+
+<!-- Loading Animation Container -->
+<div id="loading-screen" class="loading-screen">
+<div class="loading-content">
+    <div class="spinner">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+    <h3 class="mt-3">Loading CeylonSoft...</h3>
+</div>
+</div>
+
+<!-- Button to open the chatbot (place this *before* the chatbot HTML) -->
+<button id="open-chatbot-btn" title="Open Chatbot"><i class="fas fa-comment-dots"></i></button>
+
+<!-- Chatbot HTML (place this at the top of the <body>, or where you want the button to relate to) -->
+<div id="chat-container" class="minimized">
+<div id="chat-header">
+    <h2>CeylonSoft AI Assistant</h2>
+    <!-- Close (or Minimize) Button -->
+    <button id="close-chatbot-btn" class="close-button" title="Close Chatbot"></button>
+
+</div>
+<div id="scenario-buttons">
+    <button class="scenario-button" data-scenario="1">General Inquiry</button>
+    <button class="scenario-button" data-scenario="2">AI & Software</button>
+    <button class="scenario-button" data-scenario="3">Web3 & Blockchain</button>
+    <button class="scenario-button" data-scenario="4">Cybersecurity</button>
+    <button class="scenario-button" data-scenario="5">Careers</button>
+    <button class="scenario-button" data-scenario="6">Client Support</button>
+    <button class="scenario-button" data-scenario="7">Pricing</button>
+
+</div>
+<div id="chat-messages">
+    <!-- Initial welcome message and suggestions are added by JavaScript -->
+</div>
+<div id="loading-indicator">
+    <img src="https://i.stack.imgur.com/qq8AE.gif" alt="Loading...">
+</div>
+<div id="typing-indicator">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<div id="chat-input-container">
+    <input type="text" id="user-input" placeholder="Ask me anything...">
+    <button id="send-button">Send <i class="fas fa-paper-plane"></i></button>
+</div>
+</div>
+
+<!-- Modal for Contact Form (Scenario 8) -->
+<div id="contact-modal" class="modal">
+<div class="modal-content">
+    <span class="close-button" onclick="closeModal('contact-modal')">×</span>
+    <h2>Contact CeylonSoft Innovation</h2>
+    <form id="contact-form">
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="message">Message:</label><br>
+        <textarea id="message" name="message" rows="4" required></textarea><br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+    <div id="contact-form-response"></div>
+</div>
+</div>
+<!-- Context Menu -->
+<div id="context-menu" class="context-menu">
+<ul>
+    <li data-action="copy">Copy</li>
+    <li data-action="report">Report</li>
+</ul>
+</div>
+<!-- End Chatbot HTML -->
+
+
+<!-- Navbar with Advanced Animations -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+<div class="container">
+    <!-- Brand with Synchronized Animation -->
+    <a class="navbar-brand fw-bold fs-3" href="#">
+        <span class="brand-part text-primary">Ceylon</span>
+        <span class="brand-part text-light">Soft</span>
+    </a>
+
+    <!-- Toggler Button for Mobile View -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Navbar Links with Advanced Hover Animation -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="#home" data-hover="Home">Home</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#services" data-hover="Services">Services</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#portfolio" data-hover="Portfolio">Portfolio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#testimonials" data-hover="Testimonials">Testimonials</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#contact" data-hover="Contact">Contact</a>
+            </li>
+        </ul>
+    </div>
+</div>
+</nav>
+
+
+<!-- Hero Section with Advanced Animations -->
+<section id="home" class="text-center text-white position-relative overflow-hidden" style="background-image: url('Flux_Dev_Professional_graphic_design_3D_render_An_ultramodern__1.jpeg');
+background-size: cover;
+background-position: center;
+background-attachment: fixed;
+height: 100vh;">
+
+<!-- Dark Gradient Overlay for Better Contrast -->
+<div class="position-absolute top-0 start-0 w-100 h-100 gradient-overlay"></div>
+
+<div class="container position-relative z-2 d-flex flex-column justify-content-center align-items-center h-100">
+    <!-- Main Heading with Smooth Animation -->
+    <h1 class="display-4 fw-bold hero-heading" data-aos="fade-up" data-aos-delay="500">
+        Delivering Superior Services & IT Solutions
+    </h1>
+
+    <!-- Subtext with Slide and Fade Effect -->
+    <p class="lead hero-subtext" data-aos="fade-up" data-aos-delay="1000">
+        Highly customizable and SEO-friendly template
+    </p>
+
+    <!-- Call-to-Action Buttons with Advanced Animations -->
+    <div class="mt-4">
+        <a href="#services" class="btn btn-primary btn-lg shadow-lg me-2 cta-btn" data-aos="fade-up"
+            data-aos-delay="1500">
+            Get Quotes
+        </a>
+        <a href="#contact" class="btn btn-outline-light btn-lg shadow-lg cta-btn" data-aos="fade-up"
+            data-aos-delay="1800">
+            Get Started
+        </a>
+    </div>
+</div>
+
+<!-- Animated Floating Bubbles -->
+<div class="floating-bubbles">
+    <span class="bubble" style="--i:1;"></span>
+    <span class="bubble" style="--i:3;"></span>
+    <span class="bubble" style="--i:5;"></span>
+    <span class="bubble" style="--i:7;"></span>
+    <span class="bubble" style="--i:9;"></span>
+    <span class="bubble" style="--i:11;"></span>
+    <span class="bubble" style="--i:13;"></span>
+    <span class="bubble" style="--i:15;"></span>
+</div>
+</section>
+
+
+
+<!-- Services Section -->
+<section id="services" class="py-5 position-relative overflow-hidden bg-light text-dark text-center">
+<!-- Light background -->
+<div class="container">
+    <h2 class="mb-5 display-5 fw-bold  animate__animated animate__fadeInUp">Our Services</h2>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="service-card">
+                <i class="bi bi-code-slash icon"></i>
+                <h4 class="fw-semibold">Web Development</h4>
+                <p>Building responsive and high-performance websites for your business.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="service-card">
+                <i class="bi bi-phone icon"></i>
+                <h4 class="fw-semibold">Mobile Development</h4>
+                <p>Creating intuitive and powerful mobile applications.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="service-card">
+                <i class="bi bi-cloud icon"></i>
+                <h4 class="fw-semibold">Cloud Solutions</h4>
+                <p>Offering scalable and secure cloud services to enhance productivity.</p>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+
+<!-- Project Overview Section with Advanced Animations -->
+<section id="project-overview" class="py-5 text-light">
+<div class="container">
+    <h2 class="mb-5 text-center animate-title">Project Overview</h2>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="glassmorphism p-4 mission-box">
+                <h4>Our Mission</h4>
+                <p>
+                    At CeylonSoft, we aim to deliver innovative solutions that transform businesses
+                    through technology. Our goal is to create impactful digital experiences.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="glassmorphism p-4 approach-box">
+                <h4>Our Approach</h4>
+                <p>
+                    We blend creativity with technology, offering tailored solutions using agile methodologies,
+                    ensuring fast, efficient, and reliable results for our clients.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+
+
+<!-- Client Section with Advanced Animations and 3D Effects -->
+<section id="clients" class="py-5 bg-light text-center position-relative overflow-hidden"> <!-- Light background -->
+<div class="container">
+    <h2 class="mb-5 ">Our Clients</h2>
+    <p class="lead mb-4 ">We are proud to work with industry-leading brands.</p>
+    <div class="row g-4 align-items-center justify-content-center">
+        <!-- Client Logos with 3D Tilt and Glow Effect -->
+        <div class="col-md-2 col-4">
+            <div class="client-logo animate__animated animate__zoomIn" data-tilt data-tilt-glare
+                data-tilt-max-glare="0.5">
+                <img src="Daco_477895.png" class="img-fluid" alt="Client 1">
+            </div>
+        </div>
+        <div class="col-md-2 col-4">
+            <div class="client-logo animate__animated animate__zoomIn animate__delay-1s" data-tilt>
+                <img src="Daco_477895.png" class="img-fluid" alt="Client 2">
+            </div>
+        </div>
+        <div class="col-md-2 col-4">
+            <div class="client-logo animate__animated animate__zoomIn animate__delay-2s" data-tilt>
+                <img src="Daco_477895.png" class="img-fluid" alt="Client 3">
+            </div>
+        </div>
+        <div class="col-md-2 col-4">
+            <div class="client-logo animate__animated animate__zoomIn animate__delay-3s" data-tilt>
+                <img src="Daco_477895.png" class="img-fluid" alt="Client 4">
+            </div>
+        </div>
+        <div class="col-md-2 col-4">
+            <div class="client-logo animate__animated animate__zoomIn animate__delay-4s" data-tilt>
+                <img src="Daco_477895.png" class="img-fluid" alt="Client 5">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Animated Background Elements -->
+<div class="floating-shapes">
+    <span class="shape"></span>
+    <span class="shape"></span>
+    <span class="shape"></span>
+    <span class="shape"></span>
+    <span class="shape"></span>
+</div>
+</section>
+
+<!-- Technologies We Use Section with Advanced Animations & Glassmorphism -->
+<section id="technologies" class="py-5 text-center text-light">
+<div class="container">
+    <h2 class="mb-5">Technologies We Use</h2>
+    <p class="lead mb-4">Our expertise spans a wide range of modern technologies and tools.</p>
+    <div class="row g-4 justify-content-center">
+        <!-- Technology Cards with 3D Flip Animation -->
+        <div class="col-md-3 col-6">
+            <div class="tech-card animate__animated animate__flipInY">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <i class="bi bi-bootstrap fs-1 mb-3"></i>
+                        <h4>Bootstrap</h4>
+                    </div>
+                    <div class="card-back">
+                        <p>Responsive design framework for building mobile-first websites.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="tech-card animate__animated animate__flipInY animate__delay-1s">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <i class="bi bi-filetype-html fs-1 mb-3"></i>
+                        <h4>HTML5</h4>
+                    </div>
+                    <div class="card-back">
+                        <p>The latest version of HTML, providing semantic elements for structuring web content.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="tech-card animate__animated animate__flipInY animate__delay-2s">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <i class="bi bi-filetype-css fs-1 mb-3"></i>
+                        <h4>CSS3</h4>
+                    </div>
+                    <div class="card-back">
+                        <p>Used for styling web pages, including layouts, colors, and animations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="tech-card animate__animated animate__flipInY animate__delay-3s">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <i class="bi bi-filetype-js fs-1 mb-3"></i>
+                        <h4>JavaScript</h4>
+                    </div>
+                    <div class="card-back">
+                        <p>A versatile scripting language for creating interactive and dynamic web content.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="tech-card animate__animated animate__flipInY animate__delay-3s">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <i class="bi bi-filetype-php fs-1 mb-3"></i>
+                        <h4>PHP</h4>
+                    </div>
+                    <div class="card-back">
+                        <p>A widely-used server-side scripting language for web development.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="tech-card animate__animated animate__flipInY animate__delay-3s">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <i class="bi bi-database fs-1 mb-3"></i>
+                        <h4>MySQL</h4>
+                    </div>
+                    <div class="card-back">
+                        <p>An open-source relational database management system.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+<!-- Team Section with Advanced Animations & Glassmorphism -->
+<section id="team" class="py-5 text-center text-dark">
+<div class="container">
+    <h2 class="mb-5">Meet Our Team</h2>
+    <p class="lead mb-4">A team of experts dedicated to delivering excellence.</p>
+    <div class="row g-4 justify-content-center">
+        <!-- Individual Team Member Cards with Flip Animation -->
+        <div class="col-md-3 col-6" data-aos="flip-left">
+            <div class="team-card">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="image copy 4.png" class="img-fluid rounded-circle mb-3"
+                            alt="Sanuka Nadeesh">
+                        <h4>Sanuka Nadeesh</h4>
+                        <p>CEO & Founder</p>
+                    </div>
+                    <div class="card-back">
+                        <h4>Sanuka Nadeesh</h4>
+                        <p>Visionary leader with a passion for innovation and technology. 10+ years of
+                            experience in the IT industry, specializing in AI and blockchain solutions.</p>
+                        <div>
+                            <a href="https://www.linkedin.com/in/sanuka-nadeesh/" class="text-dark me-2"
+                                target="_blank"><i class="bi bi-linkedin"></i></a>
+                            <a href="https://twitter.com/sanukanadeesh" class="text-dark" target="_blank"><i
+                                    class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6" data-aos="flip-left">
+            <div class="team-card">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="image copy 4.png" class="img-fluid rounded-circle mb-3"
+                            alt="Sanuka Nadeesh">
+                        <h4>Sanuka Nadeesh</h4>
+                        <p>CEO & Founder</p>
+                    </div>
+                    <div class="card-back">
+                        <h4>Sanuka Nadeesh</h4>
+                        <p>Visionary leader with a passion for innovation and technology. 10+ years of
+                            experience in the IT industry, specializing in AI and blockchain solutions.</p>
+                        <div>
+                            <a href="https://www.linkedin.com/in/sanuka-nadeesh/" class="text-dark me-2"
+                                target="_blank"><i class="bi bi-linkedin"></i></a>
+                            <a href="https://twitter.com/sanukanadeesh" class="text-dark" target="_blank"><i
+                                    class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6" data-aos="flip-left">
+            <div class="team-card">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="image copy 4.png" class="img-fluid rounded-circle mb-3"
+                            alt="Sanuka Nadeesh">
+                        <h4>Sanuka Nadeesh</h4>
+                        <p>CEO & Founder</p>
+                    </div>
+                    <div class="card-back">
+                        <h4>Sanuka Nadeesh</h4>
+                        <p>Visionary leader with a passion for innovation and technology. 10+ years of
+                            experience in the IT industry, specializing in AI and blockchain solutions.</p>
+                        <div>
+                            <a href="https://www.linkedin.com/in/sanuka-nadeesh/" class="text-dark me-2"
+                                target="_blank"><i class="bi bi-linkedin"></i></a>
+                            <a href="https://twitter.com/sanukanadeesh" class="text-dark" target="_blank"><i
+                                    class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6" data-aos="flip-left">
+            <div class="team-card">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="image copy 4.png" class="img-fluid rounded-circle mb-3"
+                            alt="Sanuka Nadeesh">
+                        <h4>Sanuka Nadeesh</h4>
+                        <p>CEO & Founder</p>
+                    </div>
+                    <div class="card-back">
+                        <h4>Sanuka Nadeesh</h4>
+                        <p>Visionary leader with a passion for innovation and technology. 10+ years of
+                            experience in the IT industry, specializing in AI and blockchain solutions.</p>
+                        <div>
+                            <a href="https://www.linkedin.com/in/sanuka-nadeesh/" class="text-dark me-2"
+                                target="_blank"><i class="bi bi-linkedin"></i></a>
+                            <a href="https://twitter.com/sanukanadeesh" class="text-dark" target="_blank"><i
+                                    class="bi bi-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+</section>
+
+<!-- Portfolio Cards with Flip Animation -->
+<section id="portfolio" class="py-5 text-white text-center">
+<div class="container">
+    <h2 class="mb-5 display-5 fw-bold animate__animated animate__fadeInUp"
+        style="animation-delay: 0.3s;">
+        Our Portfolio
+    </h2>
+    <p class="lead animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
+        Showcasing our latest projects and designs.
+    </p>
+
+    <!-- Portfolio Cards with Flip Animation -->
+    <div class="row g-4 mt-3">
+        <div class="col-md-4">
+            <div class="portfolio-card">
+                    <div class="card-front">
+                        <img src="personal-portfolio-website.jpg" class="img-fluid" alt="Project 1 Screenshot">
+                    </div>
+                    <div class="card-back">
+                        <h4>Project One</h4>
+                        <p>Developed a responsive e-commerce website with user authentication, product
+                            catalog, and secure payment gateway integration.</p>
+                        <a href="#" class="btn btn-light">View Project</a>
+                    </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+             <div class="portfolio-card">
+                    <div class="card-front">
+                        <img src="breed2-free-portfolio-website-templates.jpg" class="img-fluid" alt="Project 2 Screenshot">
+                    </div>
+                    <div class="card-back">
+                        <h4>Project Two</h4>
+                        <p>Created a mobile application for iOS and Android, featuring real-time data
+                            synchronization and push notifications.</p>
+                        <a href="#" class="btn btn-light">View Project</a>
+                    </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="portfolio-card">
+                    <div class="card-front">
+                        <img src="a1614500-e03f-11eb-986a-30f6f0d4f1cc.png" class="img-fluid" alt="Project 3 Screenshot">
+                    </div>
+                    <div class="card-back">
+                        <h4>Project Three</h4>
+                        <p>Implemented a cloud-based data analytics platform, enabling clients to visualize
+                            and analyze large datasets.</p>
+                        <a href="#" class="btn btn-light">View Project</a>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+<!-- Testimonials Section with Carousel, Images & Parallax Background -->
+<section id="testimonials" class="py-5 text-dark text-center">
+<!-- Light background -->
+<!-- Parallax Background Image -->
+<div class="parallax-bg" style="background-image: url('parallax-bg.jpg');"></div>
+
+<div class="container position-relative">
+    <h2 class="mb-5 display-5 fw-bold animate__animated animate__fadeInUp"
+        style="animation-delay: 0.3s;">
+        Testimonials
+    </h2>
+    <p class="lead animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
+        See what our clients are saying about us.
+    </p>
+
+    <!-- Swiper Carousel for Testimonials -->
+    <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+            <!-- Testimonial Slide 1 -->
+            <div class="swiper-slide">
+                <div class="testimonial-card glassmorphism p-4 animate__animated animate__zoomIn">
+                    <img src="image copy 2.png" alt="Sanuka Nadeesh"
+                        class="testimonial-img rounded-circle mb-3">
+                    <p class="mb-3">"CeylonSoft transformed our digital presence. Highly recommended!"
+                    </p>
+                    <h5>Tharaka</h5>
+                    <span>Java institute</span>
+                </div>
+            </div>
+
+            <!-- Testimonial Slide 2 -->
+            <div class="swiper-slide">
+                <div class="testimonial-card glassmorphism p-4 animate__animated animate__zoomIn">
+                    <img src="image copy.png" alt="Sanuka Nadeesh"
+                        class="testimonial-img rounded-circle mb-3">
+                    <p class="mb-3">"Their team is innovative and dedicated to delivering results."</p>
+                    <h5>Bhathiya thisera</h5>
+                    <span>Founder of Java institute</span>
+                </div>
+            </div>
+
+            <!-- Testimonial Slide 3 -->
+            <div class="swiper-slide">
+                <div class="testimonial-card glassmorphism p-4 animate__animated animate__zoomIn">
+                    <img src="image copy 3.png" alt="Uditha Ramesh"
+                        class="testimonial-img rounded-circle mb-3">
+                    <p class="mb-3">"Exceptional service and support from start to finish!"</p>
+                    <h5>.............</h5>
+                    <span>Java institute</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Swiper Pagination -->
+        <div class="swiper-pagination"></div>
+    </div>
+</div>
+</section>
+
+
+<!-- Contact Section with Parallax & Animation -->
+<section id="contact" class="py-5 text-white text-center">
+    <div class="container">
+        <h2 class="mb-5 display-5 fw-bold animate__animated animate__fadeInUp"
+            style="animation-delay: 0.3s;">
+            Contact Us
+        </h2>
+        <p class="lead animate__animated animate__fadeInUp" style="animation-delay: 0.6s;">
+            Get in touch for inquiries or collaborations.
+        </p>
+        <a href="mailto:info@ceylonsoft.com"
+            class="btn btn-primary btn-lg animate__animated animate__fadeInUp" style="animation-delay: 1s;">
+            Email Us
+        </a>
+    </div>
+</section>
+
+
+<!-- Footer with Advanced Animations and UI -->
+<footer class="footer py-4">
+<div class="container text-center">
+    <p class="mb-2">© 2025 CeylonSoft. All Rights Reserved.</p>
+
+    <!-- Social Media Icons with Hover Animation -->
+    <div class="social-icons mb-3">
+        <a href="#" class="text-light me-3">
+            <i class="bi bi-facebook"></i>
+        </a>
+        <a href="#" class="text-light me-3">
+            <i class="bi bi-twitter"></i>
+        </a>
+        <a href="#" class="text-light me-3">
+            <i class="bi bi-linkedin"></i>
+        </a>
+        <a href="#" class="text-light">
+            <i class="bi bi-envelope"></i>
+        </a>
+    </div>
+
+    <!-- Back to Top Button with Smooth Scroll -->
+    <button class="btn btn-outline-light back-to-top" onclick="scrollToTop()">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+</div>
+</footer>
+    <script>
+        // Smooth scroll to top
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Show/hide back-to-top button based on scroll position
+        window.onscroll = function() {
+            scrollFunction()
+        };
+
+        function scrollFunction() {
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                document.querySelector(".back-to-top").classList.add("show");
+            } else {
+                document.querySelector(".back-to-top").classList.remove("show");
+            }
+        }
+    </script>
+
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Vanilla Tilt for 3D Effect -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+
+<!-- Include AOS Library -->
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+<!-- Add Swiper JS -->
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+
+<script>
+AOS.init({
+    duration: 1000,
+    easing: 'ease-in-out',
+    once: true,
+});
+
+// Initialize Swiper
+var swiper = new Swiper(".mySwiper", {
+    effect: "coverflow", // Add a nice effect
+    grabCursor: true,
+    centeredSlides: true,
+    slidesPerView: "auto",
+    coverflowEffect: {
+        rotate: 50,
+        stretch: 0,
+        depth: 100,
+        modifier: 1,
+        slideShadows: true,
+    },
+    pagination: {
+        el: ".swiper-pagination",
+        clickable: true, // Make pagination clickable
+    },
+    autoplay: { // Enable autoplay
+        delay: 5000, // 5 seconds delay
+        disableOnInteraction: false, // Continue autoplay even on user interaction
+    },
+    loop: true, // Infinite loop
+});
+
+// Function to scroll to the top of the page
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth' // Smooth scroll behavior
+    });
+}
+// Loading screen script
+window.addEventListener('load', () => {
+    const loadingScreen = document.getElementById('loading-screen');
+    loadingScreen.style.display = 'none';
+});
+
+</script>
+
+<!-- Chatbot JavaScript (place this *after* your other scripts) -->
+<script>
+const chatMessages = document.getElementById('chat-messages');
+const userInput = document.getElementById('user-input');
+const sendButton = document.getElementById('send-button');
+const scenarioButtons = document.querySelectorAll('.scenario-button');
+const loadingIndicator = document.getElementById('loading-indicator');
+const typingIndicator = document.getElementById('typing-indicator');
+const contactModal = document.getElementById('contact-modal');
+const contactForm = document.getElementById('contact-form');
+const contactFormResponse = document.getElementById('contact-form-response');
+const contextMenu = document.getElementById('context-menu');
+const openChatbotBtn = document.getElementById('open-chatbot-btn');
+const closeChatbotBtn = document.getElementById('close-chatbot-btn');
+const chatContainer = document.getElementById('chat-container');
+let currentScenario = null;
+let dialogHistory = [];
+let suggestionChips = []; // Store suggestion chip elements
+
+// --- Chatbot UI Control ---
+openChatbotBtn.addEventListener('click', () => {
+    chatContainer.classList.remove('minimized'); // Show the chatbot
+    openChatbotBtn.style.display = 'none'; // Hide the open button
+});
+
+closeChatbotBtn.addEventListener('click', () => {
+    chatContainer.classList.add('minimized');  //Hide Chatbot
+    openChatbotBtn.style.display = 'flex';  //Show button
+});
+
+
+// Helper function to get current time
+function getCurrentTime() {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+// Helper function to open WhatsApp chat
+function openWhatsApp(phoneNumber, message) {
+    let url = `https://wa.me/${phoneNumber}`;
+    if (message) {
+        url += `?text=${encodeURIComponent(message)}`;
+    }
+    window.open(url, '_blank'); // Open in a new tab/window
+}
+
+function addMessage(message, sender, imageUrl = null) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', `${sender}-message`);
+    messageDiv.setAttribute('data-sender', sender); // Store sender for context menu
+    let messageContent = message;
+
+    if (imageUrl) {
+        messageContent += `<br><img src="${imageUrl}" alt="Image">`;
+    }
+
+    messageDiv.innerHTML = messageContent;
+
+    const timestampDiv = document.createElement('div');
+    timestampDiv.classList.add('message-timestamp');
+    timestampDiv.textContent = getCurrentTime();
+    messageDiv.appendChild(timestampDiv);
+
+
+    // Add Dialog History (Corrected Logic)
+    if (dialogHistory.length > 0) {
+        const historyDiv = document.createElement('div');
+        historyDiv.classList.add('dialog-history');
+
+        let historyText = "Previous: ";
+        if (sender === 'ai') {
+            // If it's an AI message, show the *previous* user message
+            if (dialogHistory.length > 0) {
+                historyText += dialogHistory[dialogHistory.length - 1].user              }
+
+} else { // sender === 'user'
+    //if it a user message show *previous* ai and user message.
+    if (dialogHistory.length > 1) {
+        historyText += `${dialogHistory[dialogHistory.length - 2].user} -> ${dialogHistory[dialogHistory.length - 2].ai}`;
+    }
+}
+historyDiv.textContent = historyText;
+messageDiv.prepend(historyDiv); // Add before the message content
+}
+
+
+chatMessages.appendChild(messageDiv);
+chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+// Add right-click event listener for context menu
+messageDiv.addEventListener('contextmenu', showContextMenu);
+}
+
+function showLoading() {
+loadingIndicator.style.display = 'block';
+typingIndicator.style.display = 'none'; // Hide typing indicator
+}
+
+function hideLoading() {
+    loadingIndicator.style.display = 'none';
+}
+
+function showTypingIndicator() {
+    typingIndicator.style.display = 'block';
+}
+
+function hideTypingIndicator() {
+    typingIndicator.style.display = 'none';
+}
+
+function displaySuggestions(suggestions) {
+    // Remove any existing suggestion chips
+    suggestionChips.forEach(chip => chip.remove());
+    suggestionChips = []; // Clear the array
+
+    const chipsContainer = document.createElement('div');
+    chipsContainer.classList.add('suggestion-chips');
+
+    suggestions.forEach(suggestion => {
+        const chip = document.createElement('span');
+        chip.classList.add('suggestion-chip');
+        chip.textContent = suggestion.label;
+        chip.setAttribute('data-suggestion', suggestion.text);
+        chip.addEventListener('click', () => {
+            userInput.value = suggestion.text;
+            handleUserInput();
+        });
+        chipsContainer.appendChild(chip);
+        suggestionChips.push(chip); // Add to the array
+    });
+
+    // Find the last AI message and append the chips
+    const lastAIMessage = chatMessages.querySelector('.ai-message:last-child');
+    if (lastAIMessage) {
+        lastAIMessage.appendChild(chipsContainer);
+    }
+}
+
+
+async function getAIResponse(userMessage, scenario = null) {
+    showTypingIndicator(); // Show typing indicator *before* the delay
+    // Simulate a delay for a more realistic chatbot experience.
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    hideTypingIndicator();
+    showLoading();
+    let response = "";
+    let suggestions = [];
+
+    if (scenario) {
+        currentScenario = scenario;
+        userMessage = `Scenario ${scenario}: ${userMessage}`;
+    }
+
+    // Store ONLY the user message initially. The AI response will be added *after* it's generated.
+    dialogHistory.push({ user: userMessage, ai: "" }); // Initialize ai as an empty string
+    if (dialogHistory.length > 5) {
+        dialogHistory.shift();
+    }
+
+    switch (true) {
+        case /Scenario 1/.test(userMessage) || /general inquir(y|ies)/i.test(userMessage):
+            response = `CeylonSoft Innovation is a cutting-edge technology firm specializing in a comprehensive suite of services designed to propel businesses into the future. We offer:
+
+            <ul>
+                <li><strong>AI & Machine Learning:</strong>
+                    <ul>
+                        <li>Custom AI model development (Deep Learning, NLP, Computer Vision).  For example, we built a custom image recognition system for a retail client to automate inventory management.</li>
+                        <li>Data science and analytics services.  We helped a financial institution analyze customer data to identify high-risk transactions, reducing fraud by 15%.</li>
+                        <li>AI-powered process automation. We automated invoice processing for a logistics company, saving them 200+ man-hours per month.</li>
+                        <li>Predictive modeling and forecasting.  We developed a predictive maintenance model for a manufacturing plant, reducing equipment downtime by 25%.</li>
+                    </ul>
+                </li>
+                <li><strong>Web3 & Blockchain Development:</strong>
+                    <ul>
+                        <li>Smart contract development and auditing (Solidity, Vyper).  We developed and audited a smart contract for a secure voting system.</li>
+                        <li>Decentralized application (dApp) creation.  We created a dApp for transparent supply chain management.</li>
+                        <li>NFT marketplace and tokenization solutions. We built an NFT marketplace for a digital art gallery.</li>
+                        <li>DeFi (Decentralized Finance) platform development.  We developed a DeFi lending platform.</li>
+                        <li>Web3 integration with existing systems.  We integrated a Web3 authentication system into an e-commerce platform.</li>
+                    </ul>
+                </li>
+                <li><strong>Cloud Computing:</strong>
+                    <ul>
+                        <li>Cloud migration and strategy (AWS, Azure, GCP).  We migrated a large enterprise application to AWS, reducing infrastructure costs by 30%.</li>
+                        <li>Cloud-native application development.  We built a serverless application for a media company to handle high-volume traffic.</li>
+                        <li>Serverless architecture implementation.  We implemented a serverless architecture for a real-time data processing pipeline.</li>
+                        <li>Containerization (Docker, Kubernetes).  We used Docker and Kubernetes to deploy and manage microservices for a fintech company.</li>
+                        <li>DevOps and cloud infrastructure management.  We provided ongoing DevOps support and infrastructure management for a SaaS company.</li>
+                    </ul>
+                </li>
+                <li><strong>Cybersecurity:</strong>
+                    <ul>
+                        <li>Comprehensive security audits and vulnerability assessments. We conducted a comprehensive security audit for a healthcare provider, identifying critical vulnerabilities.</li>
+                        <li>Penetration testing (network, web application, mobile). We performed penetration testing for a banking application, uncovering several security flaws.</li>
+                        <li>AI-driven threat detection and response (SIEM/SOAR integration). We implemented an AI-powered threat detection system for a large corporation, reducing response time to security incidents.</li>
+                        <li>Zero Trust security architecture implementation.  We implemented a Zero Trust security model for a government agency.</li>
+                        <li>Data loss prevention (DLP) and compliance solutions.  We implemented a DLP solution for a law firm to protect sensitive client data.</li>
+                        <li>Incident response and digital forensics.  We provided incident response services to a company that experienced a data breach.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            We leverage the latest technologies and industry best practices to deliver innovative, scalable, and secure solutions.  You can also contact us via WhatsApp: <span class="cta" onclick="openWhatsApp('+94762763860', 'Inquiry from website')">WhatsApp</span>. <br><span class="cta" onclick="startScenario(2)">Explore our AI capabilities.</span>`;
+            suggestions = [
+                { label: "AI Services", text: "Tell me more about your AI services" },
+                { label: "Web3 Solutions", text: "What are your Web3 offerings?" },
+                { label: "Cloud Expertise", text: "Describe your cloud computing expertise" }
+            ];
+            break;
+
+        case /Scenario 2/.test(userMessage) || /(ai|artificial intelligence|machine learning|deep learning|nlp|computer vision|data science|automation|software development|cloud computing|ai integration)/i.test(userMessage):
+            response = `AI and advanced software solutions can revolutionize your business in numerous ways:
+
+            <ul>
+                <li><strong>Process Automation:</strong> Automate repetitive, rule-based tasks with Robotic Process Automation (RPA) and AI-powered workflows.  For example, we can automate your customer service inquiries using a chatbot.</li>
+                <li><strong>Enhanced Decision-Making:</strong> Leverage machine learning algorithms to analyze vast datasets and uncover actionable insights.  We can analyze your sales data to identify top-performing products.</li>
+                <li><strong>Personalized Customer Experiences:</strong> Utilize AI-powered chatbots and recommendation engines. We can build a recommendation system for your e-commerce store.</li>
+                <li><strong>Predictive Analytics:</strong> Use machine learning models to predict future trends, anticipate customer needs, and optimize resource allocation.  We can predict customer churn for your subscription service.</li>
+                <li><strong>Product Development:</strong> AI can assist in designing new products, optimizing existing ones, and identifying new market opportunities.  We can use AI to analyze customer feedback and identify areas for product improvement.</li>
+            </ul>
+
+            For software development, we offer:
+            <ul>
+                <li>Custom application development (web, mobile, desktop).  We developed a custom mobile app for a fitness studio to track workout progress.</li>
+                <li>Enterprise software solutions.  We built an enterprise resource planning (ERP) system for a manufacturing company.</li>
+                <li>API development and integration. We developed APIs to connect a company's internal systems with a third-party service.</li>
+                <li>Legacy system modernization. We modernized a legacy application for a government agency, improving performance and security.</li>
+            </ul>
+
+            For cloud computing, we provide expertise in:
+            <ul>
+                <li>Migrating applications and infrastructure to the cloud (AWS, Azure, GCP).  We migrated a company's on-premise servers to AWS.</li>
+                <li>Building cloud-native applications using microservices and serverless architectures. We built a microservices-based application for a food delivery service.</li>
+                <li>Managing and optimizing cloud resources.  We helped a company optimize their cloud spending, saving them 20% on their monthly bill.</li>
+            </ul>
+
+            <span class="cta" onclick="showContactForm()">Request a consultation</span> or  contact us via WhatsApp: <span class="cta" onclick="openWhatsApp('+94762763860', 'Inquiry from website')">WhatsApp</span> to discuss your specific needs. We can also provide a <span class="cta" onclick="startScenario(7)">detailed pricing proposal</span>.`;
+            suggestions = [
+                { label: "Cloud Migration", text: "How can you help with cloud migration?" },
+                { label: "Custom AI Models", text: "Can you build custom AI models?" },
+                { label: "Software Pricing", text: "What is your pricing for software development?" }
+            ];
+            break;
+
+        case /Scenario 3/.test(userMessage) || /(web3|blockchain|smart contract|dapp|nft|decentralized application|defi|cryptocurrency|tokenization|web3 authentication|solidity|vyper)/i.test(userMessage):
+            response = `Web3, powered by blockchain, is transforming the internet. Key aspects include:
+
+            <ul>
+                <li><strong>Decentralization:</strong> Data and applications are distributed across a network, reducing reliance on central authorities.</li>
+                <li><strong>Transparency:</strong> Transactions are often publicly verifiable, increasing trust and accountability.</li>
+                <li><strong>Security:</strong> Cryptographic techniques enhance security, making data more tamper-proof.</li>
+                <li><strong>User Empowerment:</strong> Users have greater control over their data and digital assets.</li>
+            </ul>
+
+            We offer:
+
+            <ul>
+                <li><strong>Smart Contract Development:</strong> We develop secure smart contracts (Solidity, Vyper) for various applications, like automated agreements and token creation.  For example, we built a smart contract to manage a decentralized loyalty program.</li>
+                <li><strong>dApp Development:</strong> We build user-friendly decentralized applications for various use cases, including supply chain management and decentralized social media.  We created a dApp for secure and transparent document sharing.</li>
+                <li><strong>NFT Solutions:</strong> We help create and manage NFTs for digital art, collectibles, and other unique assets. We built an NFT marketplace for a sports team to sell digital memorabilia.</li>
+                <li><strong>DeFi Development:</strong> We build decentralized finance platforms for lending, borrowing, and trading.  We created a DeFi platform for yield farming.</li>
+                <li><strong>Web3 Authentication:</strong> We integrate Web3 authentication methods, allowing users to log in using their crypto wallets. We integrated Metamask login into a web application.</li>
+                <li><strong>Tokenization:</strong> We help you tokenize assets, representing real-world or digital assets as tokens on a blockchain.  We tokenized real estate assets for a property investment company.</li>
+            </ul>
+             Example code (Solidity - for demonstration purposes):
+            <pre><code>
+            pragma solidity ^0.8.0;
+
+            contract SimpleStorage {
+                uint storedData;
+
+                function set(uint x) public {
+                    storedData = x;
+                }
+
+                function get() public view returns (uint) {
+                    return storedData;
+                }
+            }
+            </code></pre>
+
+            <span class="cta" onclick="showContactForm()">Contact us</span> to explore how Web3 can benefit your business.  You can also contact us directly on WhatsApp: <span class="cta" onclick="openWhatsApp('+94762763860', 'Web3 Inquiry')">WhatsApp</span>`;
+            suggestions = [
+                { label: "Smart Contract Audit", text: "Do you offer smart contract auditing?" },
+                { label: "NFT Marketplace", text: "Can you build an NFT marketplace?" },
+                { label: "Web3 Security", text: "How do you ensure Web3 security?" }
+            ];
+            break;
+
+        case /Scenario 4/.test(userMessage) || /(cybersecurity|security|penetration testing|vulnerability assessment|threat detection|incident response|zero trust|siem|soar|cloud security|dlp|data loss prevention|compliance)/i.test(userMessage):
+            response = `Cybersecurity is paramount. We offer:
+
+                <ul>
+                    <li><strong>Vulnerability Assessments & Penetration Testing:</strong> We identify weaknesses and simulate attacks to assess your security posture.  We performed a penetration test on a web application and found a SQL injection vulnerability.</li>
+                    <li><strong>AI-Driven Threat Detection & Response:</strong> We use AI to detect and respond to threats in real-time (SIEM/SOAR integration).  Our AI system detected and blocked a malware attack on a client's network.</li>
+                    <li><strong>Zero Trust Security:</strong> We implement Zero Trust architectures, verifying every user and device before granting access. We helped a company implement a Zero Trust network access (ZTNA) solution.</li>
+                    <li><strong>Cloud Security:</strong> We secure cloud environments (AWS, Azure, GCP), protecting your data and applications in the cloud.  We configured security groups and IAM roles to secure a client's AWS environment.</li>
+                    <li><strong>Data Loss Prevention (DLP):</strong> We implement DLP solutions to prevent sensitive data from leaving your organization.  We set up DLP rules to prevent employees from sending credit card numbers via email.</li>
+                    <li><strong>Incident Response & Digital Forensics:</strong> We provide rapid incident response and forensic investigations in case of a security breach. We helped a company recover from a ransomware attack and identify the source of the breach.</li>
+                    <li><strong>Compliance:</strong> We help with compliance (GDPR, HIPAA, PCI DSS), ensuring you meet regulatory requirements.  We helped a healthcare provider achieve HIPAA compliance.</li>
+                </ul>
+                <span class="cta" onclick="showContactForm()">Schedule a security consultation</span> to discuss your needs.  For immediate assistance, reach out on WhatsApp: <span class="cta" onclick="openWhatsApp('+94762763860', 'Cybersecurity Inquiry')">WhatsApp</span>`;
+            suggestions = [
+                { label: "Penetration Test", text: "Can you perform a penetration test?" },
+                { label: "Cloud Security Audit", text: "Do you offer cloud security audits?" },
+                { label: "Compliance Help", text: "Can you help with compliance (e.g., GDPR)?" }
+            ];
+            break;
+
+        case /Scenario 5/.test(userMessage) || /(careers|jobs|hiring|resume|employee benefits|remote work|culture|open positions|internships)/i.test(userMessage):
+            response = `We're always seeking talented individuals!
+
+            We offer a dynamic and rewarding work environment.
+
+            **Current Open Positions:** [Link to careers page - replace with actual link].  We frequently have openings in:
+
+            <ul>
+                <li>Software Engineering</li>
+                <li>AI/Machine Learning Engineering</li>
+                <li>Data Science</li>
+                <li>Cloud Engineering</li>
+                <li>Cybersecurity Engineering</li>
+                <li>Web3/Blockchain Development</li>
+                <li>Project Management</li>
+                <li>Sales and Marketing</li>
+            </ul>
+            **Employee Benefits:**
+            <ul>
+                <li>Competitive salaries and bonuses.</li>
+                <li>Comprehensive health insurance.</li>
+                <li>Paid time off.</li>
+                <li>Retirement savings plan.</li>
+                <li>Professional development opportunities.</li>
+                <li>Flexible work arrangements, including remote work.</li>
+                <li>Employee assistance program (EAP).</li>
+            </ul>
+            **Our Culture:**
+            We are committed to diversity, inclusion, and equity.
+
+            <span class="cta" onclick="submitResume()">Submit your resume</span> and cover letter.  Connect with us on WhatsApp for quick questions: <span class="cta" onclick="openWhatsApp('+94762763860', 'Careers Inquiry')">WhatsApp</span>`;
+            suggestions = [
+                { label: "View Openings", text: "Show me current job openings" },
+                { label: "Remote Work", text: "Do you offer remote work options?" },
+                { label: "Benefits", text: "Tell me more about employee benefits" }
+            ];
+            break;
+
+        case /Scenario 6/.test(userMessage) || /(support|troubleshooting|help|issue|problem|contact|ticket|documentation|faq|knowledge base|error|bug|outage|assistance)/i.test(userMessage):
+            response = `We're here to provide support. Here's how to get assistance:
+
+                <ol>
+                    <li><strong>Consult our Knowledge Base:</strong> [Link to knowledge base - replace with actual link] - Search for solutions to common problems.</li>
+                    <li><strong>Check our Documentation:</strong> [Link to documentation - replace with actual link] - Find detailed information about our products and services.</li>
+                    <li><strong>Submit a Support Ticket:</strong> [Link to support ticket system - replace with actual link]  Provide detailed information about your issue, including error messages and steps to reproduce.  Example: "I'm getting an 'Error 404' when I try to access the 'Reports' page after logging in."</li>
+                    <li><strong>Contact us Directly:</strong> For urgent issues:
+                         <ul>
+                             <li>Email: support@ceylonsoft.com (replace with your support email)</li>
+                             <li>Phone: +1-555-SUPPORT (replace with your support phone number)</li>
+                             <li>WhatsApp: <span class="cta" onclick="openWhatsApp('+94762763860', 'Support Request')">Chat with us</span></li>
+                         </ul>
+                    </li>
+                </ol>
+            We are committed to providing timely and effective support.`;
+            suggestions = [
+                { label: "Submit Ticket", text: "I need to submit a support ticket" },
+                { label: "Find Documentation", text: "Where can I find product documentation?" },
+                { label: "Contact Support", text: "I need to contact support directly" }
+            ];
+            break;
+        case /Scenario 7/.test(userMessage) || /(pric(e|ing)|cost|quotation|estimate|rates|plans|subscription|model|budget)/i.test(userMessage):
+            response = `Our pricing is tailored to each project. We offer:
+
+            <ul>
+                <li><strong>Project-Based Pricing:</strong> Fixed price quote for well-defined projects.  For example, a simple website might cost $5,000 - $10,000.</li>
+                <li><strong>Time and Materials:</strong> Billed for actual hours and materials used.  Our hourly rates range from $50 - $150 per hour, depending on the expertise required.</li>
+                <li><strong>Dedicated Team:</strong> A dedicated team for long-term projects.  The cost of a dedicated team depends on the team size and skill set.</li>
+                <li><strong>Subscription-Based Services:</strong> Tiered pricing for services like AI threat detection.  Our subscription plans start at $100 per month.</li>
+            </ul>
+
+            To receive a quote, please <span class="cta" onclick="showContactForm()">contact us</span> and provide:
+
+            <ul>
+                <li>Project goals - What do you want to achieve? (e.g., "Increase online sales by 20%")</li>
+                <li>Scope of work - What needs to be done? (e.g., "Develop a mobile app for iOS and Android")</li>
+                <li>Required technologies - What technologies are needed? (e.g., "React Native, Node.js, AWS")</li>
+                <li>Timeline - When do you need the project completed? (e.g., "Within 3 months")</li>
+                <li>Budget (if available) - What is your budget for the project? (e.g., "$20,000 - $30,000")</li>
+            </ul>
+            We will provide a customized quote. For a quick pricing inquiry, message us on WhatsApp: <span class="cta" onclick="openWhatsApp('+94762763860', 'Pricing Inquiry')">WhatsApp</span>`;
+            suggestions = [
+                { label: "Project Quote", text: "I need a quote for a project" },
+                { label: "Pricing Models", text: "Explain your pricing models" },
+                { label: "Subscription Costs", text: "What are your subscription costs?" }
+            ];
+            break;
+        default:
+            response = `I'm sorry, I didn't understand your question. Please try rephrasing it, or select a topic from the buttons above. I can assist you with inquiries related to:
+                    <ul>
+                      <li>General information about CeylonSoft Innovation</li>
+                      <li>AI and Software Development (including Machine Learning, Cloud, and custom solutions)</li>
+                      <li>Web3 and Blockchain technologies (Smart Contracts, dApps, NFTs, DeFi)</li>
+                      <li>Cybersecurity best practices and solutions</li>
+                      <li>Career opportunities at CeylonSoft</li>
+                      <li>Client support and troubleshooting</li>
+                      <li>Pricing and project quotations</li>
+                    </ul>
+                    You can also contact us on WhatsApp for quick questions: <span class="cta" onclick="openWhatsApp('+94762763860', 'General Inquiry')">WhatsApp</span>`;
+            suggestions = [  //General Suggestions
+                { label: "About CeylonSoft", text: "Tell me about CeylonSoft" },
+                { label: "AI & Web3", text: "How do AI and Web3 relate?" },
+                { label: "Contact", text: "How can I contact you?" }
+            ];
+    }
+
+    // *** IMPORTANT: Update dialogHistory *after* getting the response ***
+    dialogHistory[dialogHistory.length - 1].ai = response; // Now we store the AI response
+
+    addMessage(response, 'ai'); // Now add the AI message (history will work correctly)
+    if (suggestions.length > 0) {
+        displaySuggestions(suggestions);
+    }
+    hideLoading();
+    updateScenarioButtons();
+}
+
+sendButton.addEventListener('click', () => {
+    handleUserInput();
+});
+
+userInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        handleUserInput();
+    }
+});
+
+function handleUserInput() {
+    const userMessage = userInput.value.trim();
+    if (userMessage !== '') {
+        addMessage(userMessage, 'user');
+        getAIResponse(userMessage);
+        userInput.value = ''; // Clear input
+    }
+}
+
+// Scenario button handling (updated for active state)
+scenarioButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const scenario = button.dataset.scenario;
+        startScenario(scenario);
+    });
+});
+
+function updateScenarioButtons() {
+    scenarioButtons.forEach(button => {
+        if (button.dataset.scenario === currentScenario) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
+}
+
+function startScenario(scenario) {
+    let initialMessage = "";
+    switch (scenario) {
+        case "1": initialMessage = "Tell me about CeylonSoft."; break;
+        case "2": initialMessage = "How can AI help my business?"; break;
+        case "3": initialMessage = "Explain Web3."; break;
+        case "4": initialMessage = "What are cybersecurity best practices?"; break;
+        case "5": initialMessage = "Tell me about careers."; break;
+        case "6": initialMessage = "I need support."; break;
+        case "7": initialMessage = "What are your pricing options?"; break;
+
+    }
+    addMessage(initialMessage, 'user');
+    getAIResponse(initialMessage, scenario);
+}
+
+// --- Modal and Form Handling ---
+function showContactForm() {
+    contactModal.style.display = "block";
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = "none";
+}
+//Close modal if click outside
+window.onclick = function (event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+contactForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const message = document.getElementById('message').value;
+
+    // Basic Form Validation
+    if (!name || !email || !message) {
+        contactFormResponse.innerHTML = `<div class="alert alert-warning">Please fill in all fields.</div>`;
+        return;
+    }
+    if (!isValidEmail(email)) {
+        contactFormResponse.innerHTML = `<div class="alert alert-warning">Please enter a valid email address.</div>`;
+        return;
+    }
+
+
+    // Simulate sending the form data (replace with actual submission)
+    showLoading();
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate server delay
+    hideLoading();
+    contactForm.reset();
+    contactFormResponse.innerHTML = `<div class="alert alert-info">Thank you! Your message has been sent.</div>`;
+    //Close modal after 3 seconds
+    setTimeout(() => {
+        closeModal('contact-modal');
+        contactFormResponse.innerHTML = ''; //Clear any response
+    }, 3000);
+});
+
+// Email validation helper
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function submitResume() {
+    // In a real application, this would link to a dedicated resume submission page or form.
+    addMessage("Please visit our careers page at [link to careers page] to submit your resume and cover letter.", 'ai');
+}
+// --- Context Menu ---
+function showContextMenu(event) {
+    event.preventDefault();
+    const messageDiv = event.target.closest('.message');
+    if (!messageDiv) return; // Ensure we clicked on a message
+
+    const sender = messageDiv.dataset.sender;
+    contextMenu.setAttribute('data-message-id', messageDiv.id); // Store message ID
+    contextMenu.setAttribute('data-sender', sender);
+    //Only show context menu for ai messages.
+    if (sender === 'ai') {
+        contextMenu.style.left = `${event.clientX}px`;
+        contextMenu.style.top = `${event.clientY}px`;
+        contextMenu.style.display = 'block';
+    }
+
+}
+
+function hideContextMenu() {
+    contextMenu.style.display = 'none';
+}
+//Close context menu
+document.addEventListener('click', hideContextMenu);
+
+contextMenu.addEventListener('click', (event) => {
+    const action = event.target.dataset.action;
+    const messageId = contextMenu.dataset.messageId;
+    const sender = contextMenu.dataset.sender;
+    const messageElement = document.getElementById(messageId); //This line was missing and caused an error
+    if (!messageElement) return;
+
+    let messageText = messageElement.innerText; // Get plain text
+    //Remove timestamp from copied text:            messageText = messageText.replace(/\d{1,2}:\d{2} (AM|PM)/, '').trim();
+
+    switch (action) {
+        case 'copy':
+            navigator.clipboard.writeText(messageText).then(() => {
+                addMessage("Message copied to clipboard!", 'ai');
+            }).catch(err => {
+                addMessage("Failed to copy message.", 'ai');
+            });
+            break;
+        case 'report':
+            //In real app, this would trigger a report submission process
+            addMessage("Message reported. Thank you for your feedback.", 'ai');
+            break;
+    }
+
+    hideContextMenu();
+});
+
+// --- WhatsApp Integration ---
+function openWhatsApp(phoneNumber, message) {
+    let url = `https://wa.me/${+940706070966}`; //Fixed the phone number issue here
+    if (message) {
+        url += `?text=${encodeURIComponent(message)}`;
+    }
+    window.open(url, '_blank'); // Open in a new tab/window
+}
+
+
+// --- Initial Suggestions (Only Once) ---
+let initialSuggestionsDisplayed = false;
+
+// Function to add the initial AI welcome message and suggestions
+function addInitialWelcome() {
+    if (!initialSuggestionsDisplayed) { // Check the flag
+        addMessage("Welcome to CeylonSoft Innovation! How can I assist you today? You can type your question or select a topic above. I can handle complex queries related to AI, Web3, cloud computing, and cybersecurity. <br><a href='#' class='whatsapp-link' onclick='openWhatsApp(\"+94762763860\", \"Hello, I have a question from the website.\"); return false;'>Contact us on WhatsApp</a>", 'ai'); //Added WhatsApp Link here.  Make sure to use YOUR number.
+        displaySuggestions([
+            { label: "AI Services", text: "Tell me about your AI services" },
+            { label: "Web3 Solutions", text: "What is Web3?" },
+            { label: "Job Openings", text: "Show me job openings" }
+        ]);
+        initialSuggestionsDisplayed = true; // Set the flag to true
+    }
+}
+// Call the function to add initial welcome
+addInitialWelcome();
+</script>
+</body>
+
+</html>       
